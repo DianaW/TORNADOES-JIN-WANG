@@ -13,14 +13,13 @@ var space = 0;
 var DateString = null;
 var previousString = null;
 var StateString = null;
-var previousString1 = [null];
 
 var project = d3.geo.albersUsa()
-    .translate([width/2+160,height/2-90])
+    .translate([width/2+160,height/2-100])
     .scale(900);
 
 var path=d3.geo.path()
-.projection(project);
+    .projection(project);
 
 //var locationData = d3.map();
 
@@ -33,7 +32,7 @@ queue()
     .defer(d3.csv, "data/tornado-2011-v2.csv")
     .defer(d3.csv, "data/tornado-1999-v2.csv")
     //.defer(d3.csv,"data/the numbers and states.csv",parseNew)
-	.await(function(err,states,counties,data2011,data1999){
+    .await(function(err,states,counties,data2011,data1999){
         //console.log(states.features);
         //console.log(data1999)
         var parsedData1 = data2011.map(function(d){
@@ -70,7 +69,7 @@ queue()
         //console.log(data1);
         console.log(parsedData1);
         console.log(parsedData2)
-        /*$('.year').on('click',function(e) {
+        $('.year').on('click',function(e) {
             e.preventDefault();
             //console.log($(this).data('year'));
             var year =$(this).data('year');
@@ -80,49 +79,33 @@ queue()
             if(year==1999){
                 draw(parsedData2);
             }
-        })*/
-		draw(counties,states,parsedData1,parsedData2);
-	});
+        })
+        drawCountry(counties,states);
+        draw(parsedData1);
+    });
 
-function draw(counties,states,data){
-    //console.log("Draw");
-    //console.log(states);
-     console.log(states.features);
-    //console.log(counties.features);
+function draw(data){
+    var previousString1 = [null];
 
+    var updateCir=svg.selectAll('.location')
+        .data(data);
+    var enterCir= updateCir.enter();
+    var exitCir=updateCir.exit();
 
+    updateCir
+        .attr('cx',function(d){return project(d.clngLat)[0]})
+        .attr('cy',function(d){return project(d.clngLat)[1]})
+        .attr('r',3)
+        .style('fill',function(d){return scaleColor(d.EF)})
+    enterCir
+        .append('circle')
+        .attr('class','location')
+        .attr('cx',function(d){return project(d.clngLat)[0]})
+        .attr('cy',function(d){return project(d.clngLat)[1]})
+        .attr('r',3)
+        .style('fill',function(d){return scaleColor(d.EF)})
 
-    svg.append('path')
-       .attr('class','state')
-       .attr('d',path(states))
-
-    //try to add name on each state,fail,unnecessary
-    /*svg.selectAll('.county')
-        .data(counties.features)
-        .enter()
-        .append('path')
-        .attr('class','county')
-        .attr('d',path);*/
-    /*svg.selectAll('.text')
-        .data(states.features)
-        .enter()
-        .append('text')
-        .attr('class','text')
-        .text(function(d){return d.properties['NAME']})
-        .attr('text-anchor','middle');
-        //.attr('dy',12);*/
-
-    svg.selectAll('.location')
-    .data(data)
-    .enter()
-    .append('circle')
-    .attr('class','location')
-    .attr('cx',function(d){return project(d.clngLat)[0]})
-    .attr('cy',function(d){return project(d.clngLat)[1]})
-    .attr('r',3)
-    //.style('stroke','2px')
-    .style('fill',function(d){return scaleColor(d.EF)})
-    //.style('opacity',10)
+    exitCir.remove();
     svg.selectAll("circle")
 
         .on("mouseover",function(d){
@@ -294,10 +277,13 @@ function draw(counties,states,data){
         });
 
     //FIRST
+    svg.selectAll("rect").data([]).exit().remove();
     var Rect = svg.selectAll("rect")
         .data(data)
         .enter()
 
+    //Rect
+    //    .data([]).exit().remove();
     var RectRec = Rect
         .append('rect')
         .attr('class','rect')
@@ -311,14 +297,15 @@ function draw(counties,states,data){
 
             return 30*(i-space);
         })
-        .attr('width',function(d){return 6*d.TD+3})
-        .attr('height',9)
+        .attr('width',function(d){return 6*d.TD})
+        .attr('height',10)
         .style("fill",function(d) {
             return "NavajoWhite";
         })
 
     space = 0;
 
+    svg.selectAll("text").data([]).exit().remove();
     var RectText = Rect
         .append('text')
         .text(function(d,i){
@@ -326,7 +313,7 @@ function draw(counties,states,data){
             {
                 if((previousString==null)||(previousString!= d.cDate)) {
                     previousString = d.cDate;
-                    return d.cDate+' '+'('+ d.TD+')';
+                    return 'Date:' + '  ' + d.cDate+' '+'('+ d.TD+')';
                 }
             }
         })
@@ -343,16 +330,10 @@ function draw(counties,states,data){
         .style('font-size',8)
 
     space = 0;
-    var RectText = Rect
-        .append('text')
-        .text('DATE')
-        .attr('x',0)
-        .attr('y',-20)
-
-        .style('font-size',10)
 
 
     //SECOND
+    svg.selectAll("rect1").data([]).exit().remove();
     var RectRec2 = Rect
         .append('rect')
         .attr('class','rect')
@@ -366,18 +347,19 @@ function draw(counties,states,data){
 
             return 30*(i-space);
         })
-        .attr('width',function(d){return 6*d.TS+3})
-        .attr('height',9)
+        .attr('width',function(d){return 6*d.TS})
+        .attr('height',10)
         .style("fill",function(d) {
             return "pink";
         })
 
     space = 0;
 
-    var RectText2 = Rect
+    svg.selectAll("text1").data([]).exit().remove();
+    var RectText2= Rect
         .append('text')
         .text(function(d,i){
-            if(d.TS!=null)
+            if(d.TS!=0)
             {
                 for(var j=0;j<previousString1.length;j++)
                 {
@@ -391,7 +373,7 @@ function draw(counties,states,data){
                         {
                             console.log(previousString1);
                             previousString1.push(d.states);
-                            return d.states+' '+'('+ d.TS+')';
+                            return 'State:' + '  ' + d.states+' '+'('+ d.TS+')';
                         }
                     }
                 }
@@ -409,13 +391,7 @@ function draw(counties,states,data){
         .style('font-size',8)
 
     space = 0;
-    var RectText = Rect
-        .append('text')
-        .text('STATE')
-        .attr('x',220)
-        .attr('y',-20)
 
-        .style('font-size',10)
 
     var KeyText = svg.selectAll('.key')
         .data(data)
@@ -424,61 +400,62 @@ function draw(counties,states,data){
         .text(function(d){return 'EF'+''+d.EF;})
         .attr("x",function(d){return 60*d.EF+395})
         .attr("y",33)
-         .style('font-size',10)
-    var KeyText = svg.selectAll('.key')
+        .style('font-size',10);
+
+    var updateKeyText = svg.selectAll('.key')
         .data(data)
         .enter()
         .append('text')
-        .text('UNITED STATES YEARLY TOTAL')
-        .attr("x",390)
-        .attr("y",-20)
+        .text('EF = Fujita rating')
+        .attr("x",395)
+        .attr("y",5)
         //.style('stroke',)
-        .style('font-size',10)
-    var KeyText = svg.selectAll('.key')
-        .data(data)
-        .enter()
-        .append('text')
-        .text('729')
-        .attr("x",394)
-        .attr("y",10)
-        //.style('stroke',)
-        .style('font-size',12)
-    var KeyText = svg.selectAll('.key')
-        .data(data)
-        .enter()
-        .append('text')
-        .text('729')
-        .attr("x",394)
-        .attr("y",10)
-        //.style('stroke',)
-        .style('font-size',12)
-    var KeyText = svg.selectAll('.key')
-        .data(data)
-        .enter()
-        .append('text')
-        .text('628')
-        .attr("x",453)
-        .attr("y",10)
-        //.style('stroke',)
-        .style('font-size',12)
-    var KeyText = svg.selectAll('.key')
-        .data(data)
-        .enter()
-        .append('text')
-        .text('197')
-        .attr("x",514)
-        .attr("y",10)
-        //.style('stroke',)
-        .style('font-size',12)
-    var KeyText = svg.selectAll('.key')
-        .data(data)
-        .enter()
-        .append('text')
-        .text('61')
-        .attr("x",577)
-        .attr("y",10)
-        //.style('stroke',)
-        .style('font-size',12)
+        .style('font-size',10);
+    /*var KeyText = svg.selectAll('.key')
+     .data(data)
+     .enter()
+     .append('text')
+     .text('729')
+     .attr("x",394)
+     .attr("y",10)
+     //.style('stroke',)
+     .style('font-size',12);
+     var KeyText = svg.selectAll('.key')
+     .data(data)
+     .enter()
+     .append('text')
+     .text('729')
+     .attr("x",394)
+     .attr("y",10)
+     //.style('stroke',)
+     .style('font-size',12);
+     var KeyText = svg.selectAll('.key')
+     .data(data)
+     .enter()
+     .append('text')
+     .text('628')
+     .attr("x",453)
+     .attr("y",10)
+     //.style('stroke',)
+     .style('font-size',12);
+     var KeyText = svg.selectAll('.key')
+     .data(data)
+     .enter()
+     .append('text')
+     .text('197')
+     .attr("x",514)
+     .attr("y",10)
+     //.style('stroke',)
+     .style('font-size',12);
+     var KeyText = svg.selectAll('.key')
+     .data(data)
+     .enter()
+     .append('text')
+     .text('61')
+     .attr("x",577)
+     .attr("y",10)
+     //.style('stroke',)
+     .style('font-size',12);*/
 
 
     var  CirclePoint = svg.selectAll('.key')
@@ -495,6 +472,14 @@ function draw(counties,states,data){
 
 
 }
+
+function drawCountry(country,states){
+
+    svg.append('path')
+        .attr('class','state')
+        .attr('d',path(states))
+}
+
 function parse(d){
     var parsedRow = {
         cDate: +d['Date'],
